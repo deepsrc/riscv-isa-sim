@@ -4,6 +4,7 @@
 #define _RISCV_DISASM_H
 
 #include "decode.h"
+#include "processor.h"
 #include <string>
 #include <sstream>
 #include <vector>
@@ -16,6 +17,7 @@ class arg_t
 {
  public:
   virtual std::string to_string(insn_t val) const = 0;
+  virtual std::string to_value_string(insn_t val, state_t * st, bool pre_exe) const = 0;
   virtual ~arg_t() {}
 };
 
@@ -48,6 +50,28 @@ class disasm_insn_t
     return s.str();
   }
 
+  std::string to_src_reg_val_string(insn_t insn, state_t * st) const
+  {
+    std::stringstream s;
+    if (args.size())
+    {
+      for (size_t i = 0; i < args.size(); i++)
+        s << args[i]->to_value_string(insn, st, true);
+    }
+    return s.str();
+  }
+
+  std::string to_dst_reg_val_string(insn_t insn, state_t * st) const
+  {
+    std::stringstream s;
+    if (args.size())
+    {
+      for (size_t i = 0; i < args.size(); i++)
+        s << args[i]->to_value_string(insn, st, false);
+    }
+    return s.str();
+  }
+
   uint32_t get_match() const { return match; }
   uint32_t get_mask() const { return mask; }
 
@@ -64,6 +88,8 @@ class disassembler_t
   disassembler_t(int xlen);
   ~disassembler_t();
   std::string disassemble(insn_t insn) const;
+  std::string print_src_regs(insn_t insn, state_t * st) const;
+  std::string print_dst_regs(insn_t insn, state_t * st) const;
   void add_insn(disasm_insn_t* insn);
  private:
   static const int HASH_SIZE = 256;

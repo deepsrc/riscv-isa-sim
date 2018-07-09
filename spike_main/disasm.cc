@@ -5,11 +5,15 @@
 #include <vector>
 #include <cstdarg>
 #include <sstream>
+#include <iomanip>
 #include <stdlib.h>
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.i_imm()) + '(' + xpr_name[insn.rs1()] + ')';
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } load_address;
 
@@ -17,11 +21,17 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.s_imm()) + '(' + xpr_name[insn.rs1()] + ')';
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } store_address;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::string("(") + xpr_name[insn.rs1()] + ')';
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } amo_address;
 
@@ -29,11 +39,27 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rd()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == false)
+      str << xpr_name[insn.rd()]
+          << "=0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rd()]
+          << " ";
+    return str.str();
+  }
 } xrd;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rs1()];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rs1()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rs1()]
+          << " ";
+    return str.str();
   }
 } xrs1;
 
@@ -41,11 +67,28 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rs2()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rs2()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rs2()]
+          << " ";
+    return str.str();
+  }
 } xrs2;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return fpr_name[insn.rd()];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == false)
+      str << fpr_name[insn.rd()]
+          << "=0x" << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rd()].v[1]
+                   << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rd()].v[0]
+          << " ";
+    return str.str();
   }
 } frd;
 
@@ -53,17 +96,44 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return fpr_name[insn.rs1()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << fpr_name[insn.rs1()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs1()].v[1]
+                   << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs1()].v[0]
+          << " ";
+    return str.str();
+  }
 } frs1;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return fpr_name[insn.rs2()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << fpr_name[insn.rs2()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs2()].v[1]
+                   << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs2()].v[0]
+          << " ";
+    return str.str();
+  }
 } frs2;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return fpr_name[insn.rs3()];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << fpr_name[insn.rs3()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs3()].v[1]
+                   << std::hex << std::setw(16) << std::setfill('0') << s->FPR[insn.rs3()].v[0]
+          << " ";
+    return str.str();
   }
 } frs3;
 
@@ -82,11 +152,17 @@ struct : public arg_t {
       }
     }
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } csr;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.i_imm());
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } imm;
 
@@ -96,11 +172,17 @@ struct : public arg_t {
     s << std::hex << "0x" << ((uint32_t)insn.u_imm() >> 12);
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } bigimm;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string(insn.rs1());
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } zimm5;
 
@@ -112,6 +194,9 @@ struct : public arg_t {
     s << "pc " << sign << ' ' << abs(target);
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } branch_target;
 
 struct : public arg_t {
@@ -122,11 +207,22 @@ struct : public arg_t {
     s << "pc " << sign << std::hex << " 0x" << abs(target);
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } jump_target;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rvc_rs1()];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rvc_rs1()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rvc_rs1()]
+          << " ";
+    return str.str();
   }
 } rvc_rs1;
 
@@ -134,11 +230,27 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rvc_rs2()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rvc_rs2()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rvc_rs2()]
+          << " ";
+    return str.str();
+  }
 } rvc_rs2;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rvc_rs1s()];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rvc_rs1s()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rvc_rs1s()]
+          << " ";
+    return str.str();
   }
 } rvc_rs1s;
 
@@ -146,11 +258,27 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[insn.rvc_rs2s()];
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[insn.rvc_rs2s()]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[insn.rvc_rs2s()]
+          << " ";
+    return str.str();
+  }
 } rvc_rs2s;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return xpr_name[X_SP];
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    std::stringstream str;
+    if (pre_exe == true)
+      str << xpr_name[X_SP]
+          << ":0x" << std::hex << std::setw(16) << std::setfill('0') << s->XPR[X_SP]
+          << " ";
+    return str.str();
   }
 } rvc_sp;
 
@@ -158,11 +286,17 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_imm());
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_imm;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_addi4spn_imm());
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } rvc_addi4spn_imm;
 
@@ -170,17 +304,26 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_addi16sp_imm());
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_addi16sp_imm;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_lwsp_imm());
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_lwsp_imm;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)(insn.rvc_imm() & 0x3f));
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } rvc_shamt;
 
@@ -190,11 +333,17 @@ struct : public arg_t {
     s << std::hex << "0x" << (uint32_t)insn.rvc_imm();
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_uimm;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_lwsp_imm()) + '(' + xpr_name[X_SP] + ')';
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } rvc_lwsp_address;
 
@@ -202,11 +351,17 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_ldsp_imm()) + '(' + xpr_name[X_SP] + ')';
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_ldsp_address;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_swsp_imm()) + '(' + xpr_name[X_SP] + ')';
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } rvc_swsp_address;
 
@@ -214,17 +369,26 @@ struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_sdsp_imm()) + '(' + xpr_name[X_SP] + ')';
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_sdsp_address;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_lw_imm()) + '(' + xpr_name[insn.rvc_rs1s()] + ')';
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_lw_address;
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
     return std::to_string((int)insn.rvc_ld_imm()) + '(' + xpr_name[insn.rvc_rs1s()] + ')';
+  }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
   }
 } rvc_ld_address;
 
@@ -236,6 +400,9 @@ struct : public arg_t {
     s << "pc " << sign << ' ' << abs(target);
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_branch_target;
 
 struct : public arg_t {
@@ -246,12 +413,27 @@ struct : public arg_t {
     s << "pc " << sign << ' ' << abs(target);
     return s.str();
   }
+  std::string to_value_string(insn_t insn, state_t * s, bool pre_exe) const {
+    return std::string("");
+  }
 } rvc_jump_target;
 
 std::string disassembler_t::disassemble(insn_t insn) const
 {
   const disasm_insn_t* disasm_insn = lookup(insn);
   return disasm_insn ? disasm_insn->to_string(insn) : "unknown";
+}
+
+std::string disassembler_t::print_src_regs(insn_t insn, state_t * st) const
+{
+  const disasm_insn_t* disasm_insn = lookup(insn);
+  return disasm_insn ? disasm_insn->to_src_reg_val_string(insn, st) : "unknown";
+}
+
+std::string disassembler_t::print_dst_regs(insn_t insn, state_t * st) const
+{
+  const disasm_insn_t* disasm_insn = lookup(insn);
+  return disasm_insn ? disasm_insn->to_dst_reg_val_string(insn, st) : "unknown";
 }
 
 disassembler_t::disassembler_t(int xlen)

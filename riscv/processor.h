@@ -335,6 +335,7 @@ private:
   insn_func_t decode_insn(insn_t insn);
 
   // Track repeated executions for processor_t::disasm()
+  insn_t last_insn;
   uint64_t last_pc, last_bits, executions;
 };
 

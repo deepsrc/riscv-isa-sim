@@ -310,10 +310,17 @@ void processor_t::disasm(insn_t insn)
       fprintf(stderr, "core %3d: Executed %" PRIx64 " times\n", id, executions);
     }
 
-    fprintf(stderr, "core %3d: 0x%016" PRIx64 " (0x%08" PRIx64 ") %s\n",
+    fprintf(stderr, "%s", disassembler->print_dst_regs(last_insn, get_state()).c_str());
+    fprintf(stderr, "\n");
+
+    fprintf(stderr, "core %3d: 0x%016" PRIx64 " (0x%08" PRIx64 ") %-30s",
             id, state.pc, bits, disassembler->disassemble(insn).c_str());
+
+    fprintf(stderr, "%s", disassembler->print_src_regs(insn, get_state()).c_str());
+
     last_pc = state.pc;
     last_bits = bits;
+    last_insn = insn;
     executions = 1;
   } else {
     executions++;
